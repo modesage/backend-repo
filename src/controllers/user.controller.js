@@ -255,79 +255,110 @@ const updateAccountDetails = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, user, "Account details updated successfully"))
 })
 
-const updateUserAvatar = asyncHandler(async(req, res) => {
-    const avatarLocalPath = req.file?.path
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = req.file?.path;
 
     if (!avatarLocalPath) {
-        throw new ApiError(400, "Avatar file is missing")
+        throw new ApiError(400, "Avatar file is missing");
     }
 
-    const userLookup = await User.findById(req.user?._id)
-
-    const public_id = userLookup.avatarPublic_id
-
-    const result = await deleteOnCloudinary(public_id)
-
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
-
-    if (!avatar.url) {
-        throw new ApiError(400, "Error while uploading the avatar")
+    const userLookup = await User.findById(req.user?._id);
+    if (!userLookup) {
+        throw new ApiError(404, "User not found");
     }
 
-    const user = await User.findByIdAndUpdate(
+    const public_id = userLookup.avatarPublic_id;
+
+    let avatar;
+    try {
+        avatar = await uploadOnCloudinary(avatarLocalPath);
+        if (!avatar?.url) {
+            throw new Error("Upload failed");
+        }
+    } catch (error) {
+        throw new ApiError(500, "Error while uploading the new avatar");
+    }
+
+    if (public_id) {
+        try {
+            await deleteOnCloudinary(public_id);
+        } catch (error) {
+            throw new ApiError(500, "Error while deleting the old avatar");
+        }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
         req.user?._id,
         {
-            $set:{
+            $set: {
                 avatar: avatar.url,
                 avatarPublic_id: avatar.public_id
             }
         },
-        {new: true}
-    ).select("-password")
+        { new: true }
+    ).select("-password");
 
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, user, "Avatar image updated successfully")
-    )
-})
+    if (!updatedUser) {
+        throw new ApiError(404, "User not found");
+    }
 
-const updateUserCoverImage = asyncHandler(async(req, res) => {
-    const coverImageLocalPath = req.file?.path
+    return res.status(200).json(
+        new ApiResponse(200, updatedUser, "Avatar image updated successfully")
+    );
+});
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+    const coverImageLocalPath = req.file?.path;
 
     if (!coverImageLocalPath) {
-        throw new ApiError(400, "Cover image file is missing")
+        throw new ApiError(400, "Cover image file is missing");
     }
 
-    const userLookup = await User.findById(req.user?._id)
-
-    const public_id = userLookup.coverImagePublic_id
-
-    const result = await deleteOnCloudinary(public_id)
-
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
-
-    if (!coverImage.url) {
-        throw new ApiError(400, "Error while uploading the cover image")   
+    const userLookup = await User.findById(req.user?._id);
+    if (!userLookup) {
+        throw new ApiError(404, "User not found");
     }
 
-    const user = await User.findByIdAndUpdate(
+    const public_id = userLookup.coverImagePublic_id;
+
+    let coverImage;
+    try {
+        coverImage = await uploadOnCloudinary(coverImageLocalPath);
+        if (!coverImage?.url) {
+            throw new Error("Upload failed");
+        }
+    } catch (error) {
+        throw new ApiError(500, "Error while uploading the new cover image");
+    }
+
+    if (public_id) {
+        try {
+            await deleteOnCloudinary(public_id);
+        } catch (error) {
+            throw new ApiError(500, "Error while deleting the old cover image")
+        }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
         req.user?._id,
         {
-            $set:{
+            $set: {
                 coverImage: coverImage.url,
                 coverImagePublic_id: coverImage.public_id
             }
         },
-        {new: true}
-    ).select("-password")
+        { new: true }
+    ).select("-password");
 
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, user, "Cover image updated successfully")
-    )
-})
+    if (!updatedUser) {
+        throw new ApiError(404, "User not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, updatedUser, "Cover image updated successfully")
+    );
+});
+
 
 export {
     registerUser,
