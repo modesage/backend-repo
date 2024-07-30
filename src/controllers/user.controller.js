@@ -281,10 +281,13 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
     if (public_id) {
         try {
-            await deleteOnCloudinary(public_id);
+            const response = await deleteOnCloudinary(public_id);
+            console.log("Avatar deletion response: ", response);
         } catch (error) {
             throw new ApiError(500, "Error while deleting the old avatar");
         }
+    } else {
+        console.warn("Attempted to delete avatar, but no public_id was provided.");
     }
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -333,10 +336,13 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
     if (public_id) {
         try {
-            await deleteOnCloudinary(public_id);
+            const response = await deleteOnCloudinary(public_id);
+            console.log("Cover image deletion response: ", response);
         } catch (error) {
             throw new ApiError(500, "Error while deleting the old cover image")
         }
+    } else {
+        console.warn("Attempted to delete cover image, but no public_id was provided.");
     }
 
     const updatedUser = await User.findByIdAndUpdate(
