@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js"
 import { User} from "../models/user.model.js"
-import {deleteOnCloudinary, uploadOnCloudinary} from "../utils/cloudinary.js"
+import {deleteResourceOnCloudinary, uploadOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose";
@@ -282,7 +282,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
     if (public_id) {
         try {
-            const response = await deleteOnCloudinary(public_id);
+            const response = await deleteResourceOnCloudinary(public_id, "image");
             console.log("Avatar deletion response: ", response);
         } catch (error) {
             throw new ApiError(500, "Error while deleting the old avatar");
@@ -337,7 +337,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
     if (public_id) {
         try {
-            const response = await deleteOnCloudinary(public_id);
+            const response = await deleteResourceOnCloudinary(public_id, "image");
             console.log("Cover image deletion response: ", response);
         } catch (error) {
             throw new ApiError(500, "Error while deleting the old cover image")
